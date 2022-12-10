@@ -18,12 +18,13 @@ class Dissasembler {
     // for (let i = 0; i < input.length; i += 2) {
     //   console.log(input[i].toString(16) + input[i + 1].toString(16));
     // }
-    let count = 0;
-
     for (let i = 0; i < input.length; i += 2) {
-      count++;
       let opcode = this.fetch(input[i], input[i + 1]);
-      // console.log(opcode[0].toString(16));
+      // let nnn = new Uint16Array([(opcode[0] >> 0) & 0x0fff]);
+      let n = new Uint8Array([opcode[0] & 0xf]);
+      // let x = new Uint8Array([(opcode[0] >> 8) & 0xf]);
+      let kk = new Uint8Array([(opcode[0] >> 0) & 0xff]);
+
       switch (opcode[0] & 0xf000) {
         case 0x0000:
           if (opcode[0] === 0x00e0) {
@@ -54,7 +55,38 @@ class Dissasembler {
           console.log("7xkk: ADD Vx, kk");
           break;
         case 0x8000:
-          console.log("8000: A bunch of options");
+          switch (n[0]) {
+            case 0x0:
+              console.log("8xy0: LD Vx, Vy");
+              break;
+            case 0x1:
+              console.log("8xy1: OR Vx, Vy");
+              break;
+            case 0x2:
+              console.log("8x02: AND Vx, Vy");
+              break;
+            case 0x3:
+              console.log("8xy3: XOR Vx, Vy");
+              break;
+            case 0x4:
+              console.log("8xy4: ADD Vx, Vy");
+              break;
+            case 0x5:
+              console.log("8xy5: SUB Vx, Vy");
+              break;
+            case 0x6:
+              console.log("8xy6: SHR Vx {, Vy}");
+              break;
+            case 0x7:
+              console.log("8xy7: SUBN Vx, Vy");
+              break;
+            case 0xe:
+              console.log("8xyE: SHL Vx {, Vy}");
+              break;
+            default:
+              console.log("INVALID OPCODE REEEEEEEEEEEEEEE (its fine)");
+              break;
+          }
           break;
         case 0x9000:
           console.log("9xy0: SNE Vx, Vy");
@@ -72,17 +104,19 @@ class Dissasembler {
           console.log("Dxyn: DRW Vx, Vy, nibble");
           break;
         case 0xe000:
-          console.log("E000: A few of them");
+          if (kk[0] === 0x9e) {
+            console.log("Ex9E: SKP Vx");
+          } else if (kk[0] === 0xa1) {
+            console.log("ExA1: SKNP Vx");
+          }
           break;
         case 0xf000:
           console.log("F000: A few of them");
           break;
         default:
-          console.log("Invalid Opcode");
+          console.log("False flag");
       }
     }
-
-    console.log(count, input.length / 2);
   }
 }
 
