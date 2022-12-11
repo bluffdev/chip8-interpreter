@@ -1,7 +1,12 @@
 import { readFileSync } from "fs";
 
 class Dissasembler {
-  constructor() {}
+  private memory: Buffer;
+
+  constructor() {
+    this.memory = Buffer.from(new Uint8Array(4096));
+    this.readRom();
+  }
 
   fetch(left: number, right: number) {
     let opcode = new Uint16Array(1);
@@ -11,19 +16,23 @@ class Dissasembler {
     return opcode;
   }
 
-  dump() {
+  readRom() {
     let input = readFileSync(`${process.cwd()}/src/roms/IBM.ch8`);
-    // let cool = Buffer.alloc(4096);
+    let pc = 512;
 
-    // for (let i = 0; i < input.length; i += 2) {
-    //   console.log(input[i].toString(16) + input[i + 1].toString(16));
-    // }
-    for (let i = 0; i < input.length; i += 2) {
-      let opcode = this.fetch(input[i], input[i + 1]);
+    for (let i = 0; i < input.length; i++, pc++) {
+      this.memory[pc] = input[i];
+    }
+  }
+
+  dump() {
+    // let input = readFileSync(`${process.cwd()}/src/roms/IBM.ch8`);
+    for (let i = 512; i < 512 + 132; i += 2) {
+      let opcode = this.fetch(this.memory[i], this.memory[i + 1]);
       // let nnn = new Uint16Array([(opcode[0] >> 0) & 0x0fff]);
       let n = new Uint8Array([opcode[0] & 0xf]);
       // let x = new Uint8Array([(opcode[0] >> 8) & 0xf]);
-      let kk = new Uint8Array([(opcode[0] >> 0) & 0xff]);
+      let kk = new Uint8Array([opcode[0] & 0xff]);
 
       switch (opcode[0] & 0xf000) {
         case 0x0000:
@@ -112,13 +121,56 @@ class Dissasembler {
           break;
         case 0xf000:
           console.log("F000: A few of them");
+          switch (kk[0]) {
+            case 0x07:
+              console.log("Fx07: LD Vx, DT");
+              break;
+            case 0x0a:
+              console.log("Fx0A: LD Vx, K");
+              break;
+            case 0x15:
+              console.log("Fx15: LD DT, Vx");
+              break;
+            case 0x18:
+              console.log("Fx18: LD St, Vx");
+              break;
+            case 0x1e:
+              console.log("Fx1E: ADD I, Vx");
+              break;
+            case 0x29:
+              console.log("Fx29: LD F, Vx");
+              break;
+            case 0x33:
+              console.log("Fx33: LD B, Vx");
+              break;
+            case 0x55:
+              console.log("Fx55: LD [I], Vx");
+              break;
+            case 0x65:
+              console.log("Fx65: LD Vx, [I]");
+              break;
+            default:
+              console.log(
+                "INVALID OPCODE REEEEEEEEEEEEEEE (its fine)",
+                opcode[0].toString(16)
+              );
+              break;
+          }
           break;
         default:
           console.log("False flag");
       }
     }
   }
+
+  read() {
+    for (let i = 512; i < 512 + 66; i += 2) {
+      let opcode = this.fetch(this.memory[i], this.memory[i + 1]);
+      console.log(opcode[0].toString(16));
+    }
+  }
 }
 
 let test = new Dissasembler();
 test.dump();
+// test.read();
