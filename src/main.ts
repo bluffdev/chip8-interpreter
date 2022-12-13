@@ -1,38 +1,27 @@
 import Chip8 from './chip8';
 import Display from './display';
 
-let pixels = new Uint8Array(64 * 32).fill(0);
-
-// for (let i = 0; i < pixels.length; i++) {
-//   pixels[i] = new Array<number>(32).fill(0, 0, 32);
-//   if (i > pixels.length / 2) {
-//     pixels[i].fill(1, 0, 32);
-//   }
-// }
-
-// for (let i = 0; i < pixels.length; i++) {
-//   if (i > pixels.length / 2 - 1) {
-//     pixels[i] = 1;
-//   }
-// }
-
 let display = new Display(1280, 640);
 let chip8 = new Chip8();
-// display.render(pixels);
 
-// function main() {
-//   chip8.execute();
-//   if (chip8.getDrawFlag() === true) {
-//     display.render(chip8.getDisplay());
-//   }
+let fileInput = document.getElementById('files') as HTMLInputElement;
 
-//   requestAnimationFrame(() => main());
-// }
+fileInput.addEventListener('change', function (e) {
+  let file = (<any>e.target).files[0];
+  chip8.readRom(file);
+  chip8.setLoaded(true);
+});
 
-for (let i = 0; i < 25; i++) {
+function run() {
   chip8.execute();
+  if (chip8.getDrawFlag() === true) {
+    display.draw(chip8.getDisplay());
+    chip8.setDrawFlag(false);
+  }
+
+  setTimeout(() => {
+    run();
+  }, 0);
 }
 
-display.render(pixels);
-
-// main();
+run();

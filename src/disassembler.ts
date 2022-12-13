@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 class Dissasembler {
   private memory: Buffer;
-  private display: Uint8Array;
+  private display: Array<number>;
   private V: Uint8Array;
   private I: Uint16Array;
   private DT: Uint8Array;
@@ -14,7 +14,7 @@ class Dissasembler {
 
   constructor() {
     this.memory = Buffer.from(new Uint8Array(4096).fill(0));
-    this.display = new Uint8Array(64 * 32).fill(0);
+    this.display = new Array(64 * 32).fill(0);
     this.V = new Uint8Array(16).fill(0);
     this.I = new Uint16Array(1).fill(0);
     this.DT = new Uint8Array(1).fill(0);
@@ -312,20 +312,6 @@ class Dissasembler {
 
 let test = new Dissasembler();
 
-let ones = 0;
-let zeroes = 0;
-
 for (let i = 0; i < 40; i++) {
   test.dump();
 }
-
-let meme = test.getDisplay();
-for (let i = 0; i < meme.length; i++) {
-  if (meme[i] === 0) {
-    zeroes++;
-  } else if (meme[i] === 1) {
-    ones++;
-  }
-}
-// test.read();
-console.log(zeroes, ones);

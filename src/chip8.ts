@@ -1,8 +1,9 @@
-import { readFileSync } from 'fs';
+// import { readFileSync } from 'fs';
+import { fontSprites } from './font';
 
 export default class Chip8 {
-  private memory: Buffer;
-  private display: Uint8Array;
+  private memory: Uint8Array;
+  private display: Array<number>;
   private V: Uint8Array;
   private I: Uint16Array;
   private DT: Uint8Array;
@@ -11,10 +12,12 @@ export default class Chip8 {
   private SP: Uint8Array;
   private stack: Uint16Array;
   private drawFlag: boolean;
+  private loaded: boolean;
+  private temp: boolean = false;
 
   constructor() {
-    this.memory = Buffer.from(new Uint8Array(4096).fill(0));
-    this.display = new Uint8Array(64 * 32).fill(0);
+    this.memory = new Uint8Array(4096).fill(0);
+    this.display = new Array(64 * 32).fill(0);
     this.V = new Uint8Array(16).fill(0);
     this.I = new Uint16Array(1).fill(0);
     this.DT = new Uint8Array(1).fill(0);
@@ -23,7 +26,18 @@ export default class Chip8 {
     this.SP = new Uint8Array(1).fill(0);
     this.stack = new Uint16Array(16).fill(0);
     this.drawFlag = false;
-    this.readRom();
+    this.loaded = false;
+    // this.readRom();
+  }
+
+  readSprites() {
+    for (let i = 0; i < 80; i++) {
+      this.memory[i] = fontSprites[i];
+    }
+  }
+
+  getTemp() {
+    return this.temp;
   }
 
   fetch(left: number, right: number) {
@@ -34,19 +48,29 @@ export default class Chip8 {
     return opcode;
   }
 
-  readRom() {
-    let input = readFileSync(`${process.cwd()}/src/roms/IBM.ch8`);
-    let pc = 512;
-
-    for (let i = 0; i < input.length; i++, pc++) {
-      this.memory[pc] = input[i];
-    }
+  readRom(rom: any) {
+    let reader = new FileReader() as FileReader;
+    reader.onload = () => {
+      let buffer = new Uint8Array(reader.result as ArrayBuffer);
+      for (let i = 0; i < buffer.length; i++) {
+        this.memory[0x200 + i] = buffer[i];
+      }
+    };
+    this.loaded = true;
+    reader.readAsArrayBuffer(rom);
+    // let input = readFileSync(`${process.cwd()}/src/roms/IBM.ch8`);
+    // let pc = 512;
+    // for (let i = 0; i < input.length; i++, pc++) {
+    //   this.memory[pc] = input[i];
+    // }
   }
 
   execute() {
+    if (this.loaded === false) return;
+
     let opcode = this.fetch(this.memory[this.PC[0]], this.memory[this.PC[0] + 1]);
     let nnn = new Uint16Array([opcode[0] & 0x0fff]);
-    let n = new Uint8Array([opcode[0] & 0xf]);
+    let n = new Uint8Array([opcode[0] & 0x000f]);
     let x = new Uint8Array([(opcode[0] & 0x0f00) >> 8]);
     let y = new Uint8Array([(opcode[0] & 0x00f0) >> 8]);
     let kk = new Uint8Array([opcode[0] & 0xff]);
@@ -54,6 +78,7 @@ export default class Chip8 {
     switch (opcode[0] & 0xf000) {
       case 0x0000:
         if (opcode[0] === 0x00e0) {
+          this.drawFlag = true;
           this.PC[0] += 2;
           console.log('0x00E0: CLS');
         } else if (opcode[0] === 0x00ee) {
@@ -66,6 +91,7 @@ export default class Chip8 {
       case 0x1000:
         console.log('1nnn: JP nnn');
         this.PC[0] = nnn[0];
+        this.temp = true;
         break;
       case 0x2000:
         console.log('2nnn: Call nnn');
@@ -104,12 +130,12 @@ export default class Chip8 {
       case 0x6000:
         this.V[x[0]] = kk[0];
         this.PC[0] += 2;
-        console.log('6xkk: LD Vx, kk');
+        console.log('6xkk: LD Vx, kk ', kk[0].toString(16));
         break;
       case 0x7000:
         this.V[x[0]] += kk[0];
         this.PC[0] += 2;
-        console.log('7xkk: ADD Vx, kk');
+        console.log('7xkk: ADD Vx, kk', kk[0].toString(16));
         break;
       case 0x8000:
         switch (n[0]) {
@@ -197,7 +223,7 @@ export default class Chip8 {
       case 0xa000:
         this.I[0] = nnn[0];
         this.PC[0] += 2;
-        console.log('Annn: LD I, nnn');
+        console.log('Annn: LD I, nnn ', nnn[0].toString(16), this.I[0].toString(16));
         break;
       case 0xb000:
         this.PC[0] = nnn[0] + this.V[0];
@@ -210,24 +236,33 @@ export default class Chip8 {
         console.log('Cxkk: RND Vx, kk');
         break;
       case 0xd000:
-        // TODO
-        let height = new Uint8Array([opcode[0] & 0x000f]);
-        let pixel = new Uint16Array([0]);
+        const N = opcode[0] & 0x000f;
+        const X = (opcode[0] & 0x0f00) >> 8;
+        const Y = (opcode[0] & 0x00f0) >> 4;
+        this.V[0xf] = 0;
+        for (let row = 0; row < N; row++) {
+          const spriteRow = this.memory[this.I[0] + row];
 
-        for (let yline = 0; yline < height[0]; yline++) {
-          pixel[0] = this.memory[this.I[0] + yline];
-          for (let xline = 0; xline < 8; xline++) {
-            if ((pixel[0] & (0x80 >> xline)) !== 0) {
-              if (this.display[x[0] + xline + (y[0] + yline) * 64] === 1) {
-                this.V[15] = 1;
-              }
-              this.display[x[0] + xline + (y[0] + yline) * 64] ^= 1;
+          for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
+            const bit = spriteRow & (0b10000000 >> bitIndex);
+
+            if (!bit) continue;
+
+            const targetX = (this.V[X] + bitIndex) % 64; // modulus to make it wrap to screen
+            const targetY = (this.V[Y] + row) % 32;
+            const displayPosition = targetX + targetY * 64; // Transform 2D to 1D -> i = x + width*y;
+
+            // If the display will be unset, set VF
+            if (this.display[displayPosition] !== 0) {
+              this.V[0xf] = 0x1;
             }
+
+            this.display[displayPosition] ^= 1;
           }
         }
         this.drawFlag = true;
         this.PC[0] += 2;
-        console.log('Dxyn: DRW Vx, Vy, nibble');
+        console.log('Dxyn: DRW Vx, Vy, nibble ', n[0].toString(16));
         break;
       case 0xe000:
         if (kk[0] === 0x9e) {
@@ -300,5 +335,13 @@ export default class Chip8 {
 
   getDrawFlag() {
     return this.drawFlag;
+  }
+
+  setDrawFlag(val: boolean) {
+    this.drawFlag = val;
+  }
+
+  setLoaded(val: boolean) {
+    this.loaded = val;
   }
 }
