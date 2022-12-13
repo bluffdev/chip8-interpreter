@@ -1,4 +1,3 @@
-// import { readFileSync } from 'fs';
 import { fontSprites } from './font';
 
 export default class Chip8 {
@@ -13,7 +12,6 @@ export default class Chip8 {
   private stack: Uint16Array;
   private drawFlag: boolean;
   private loaded: boolean;
-  private temp: boolean = false;
 
   constructor() {
     this.memory = new Uint8Array(4096).fill(0);
@@ -26,8 +24,7 @@ export default class Chip8 {
     this.SP = new Uint8Array(1).fill(0);
     this.stack = new Uint16Array(16).fill(0);
     this.drawFlag = false;
-    this.loaded = false;
-    // this.readRom();
+    this.loaded = true;
   }
 
   readSprites() {
@@ -36,8 +33,10 @@ export default class Chip8 {
     }
   }
 
-  getTemp() {
-    return this.temp;
+  loadRom(rom: Uint8Array) {
+    for (let i = 0; i < rom.length; i++) {
+      this.memory[0x200 + i] = rom[i];
+    }
   }
 
   fetch(left: number, right: number) {
@@ -46,23 +45,6 @@ export default class Chip8 {
     opcode[0] <<= 8;
     opcode[0] |= right;
     return opcode;
-  }
-
-  readRom(rom: any) {
-    let reader = new FileReader() as FileReader;
-    reader.onload = () => {
-      let buffer = new Uint8Array(reader.result as ArrayBuffer);
-      for (let i = 0; i < buffer.length; i++) {
-        this.memory[0x200 + i] = buffer[i];
-      }
-    };
-    this.loaded = true;
-    reader.readAsArrayBuffer(rom);
-    // let input = readFileSync(`${process.cwd()}/src/roms/IBM.ch8`);
-    // let pc = 512;
-    // for (let i = 0; i < input.length; i++, pc++) {
-    //   this.memory[pc] = input[i];
-    // }
   }
 
   execute() {
@@ -91,7 +73,6 @@ export default class Chip8 {
       case 0x1000:
         console.log('1nnn: JP nnn');
         this.PC[0] = nnn[0];
-        this.temp = true;
         break;
       case 0x2000:
         console.log('2nnn: Call nnn');
@@ -248,11 +229,10 @@ export default class Chip8 {
 
             if (!bit) continue;
 
-            const targetX = (this.V[X] + bitIndex) % 64; // modulus to make it wrap to screen
+            const targetX = (this.V[X] + bitIndex) % 64;
             const targetY = (this.V[Y] + row) % 32;
-            const displayPosition = targetX + targetY * 64; // Transform 2D to 1D -> i = x + width*y;
+            const displayPosition = targetX + targetY * 64;
 
-            // If the display will be unset, set VF
             if (this.display[displayPosition] !== 0) {
               this.V[0xf] = 0x1;
             }
@@ -327,8 +307,8 @@ export default class Chip8 {
       default:
         console.log('False flag');
     }
-    // }
   }
+
   getDisplay() {
     return this.display;
   }
@@ -339,6 +319,10 @@ export default class Chip8 {
 
   setDrawFlag(val: boolean) {
     this.drawFlag = val;
+  }
+
+  getLoaded() {
+    return this.loaded;
   }
 
   setLoaded(val: boolean) {

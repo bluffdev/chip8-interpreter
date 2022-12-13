@@ -1,15 +1,36 @@
 import Chip8 from './chip8';
 import Display from './display';
+import Rom from './rom';
 
 let display = new Display(1280, 640);
 let chip8 = new Chip8();
+let roms = new Rom();
+
+display.draw(new Array(2048).fill(0));
 
 let fileInput = document.getElementById('files') as HTMLInputElement;
+let start = document.getElementById('start') as HTMLButtonElement;
 
-fileInput.addEventListener('change', function (e) {
+function check() {
+  if (roms.getRomsLength() !== 0) {
+    // chip8.loadRom(roms.getIBMRom());
+    chip8.setLoaded(true);
+    return;
+  }
+
+  check();
+}
+
+roms.readExistingRom();
+chip8.setLoaded(true);
+
+fileInput.addEventListener('change', (e: Event) => {
   let file = (<any>e.target).files[0];
-  chip8.readRom(file);
-  chip8.setLoaded(true);
+  roms.readRomInput(file);
+
+  setTimeout(() => {
+    check();
+  }, 1);
 });
 
 function run() {
@@ -21,7 +42,13 @@ function run() {
 
   setTimeout(() => {
     run();
-  }, 0);
+  }, 1);
 }
 
-run();
+start.addEventListener('click', (e: Event) => {
+  e.preventDefault();
+  if (chip8.getLoaded() === true) {
+    chip8.loadRom(roms.getIBMRom());
+    run();
+  }
+});

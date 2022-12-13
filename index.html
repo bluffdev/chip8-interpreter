@@ -8,8 +8,11 @@
   </head>
   <body>
     <div id="app">
-      Load a game:
-      <input type="file" id="files" name="file" />
+      <div id="load">
+        Load a game:
+        <input type="file" id="files" name="file" />
+        <button id="start">Start</button>
+      </div>
       <canvas width="1280" height="640"></canvas>
     </div>
     <script type="module" src="/src/main.ts"></script>
@@ -20,9 +23,14 @@
     }
     #app {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin-top: 15em;
+      margin-top: 10em;
+    }
+    #load {
+      display: flex;
+      margin-bottom: 0.5em;
     }
   </style>
 </html>
