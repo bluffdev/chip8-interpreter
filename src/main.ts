@@ -6,7 +6,7 @@ let display = new Display(1280, 640);
 let chip8 = new Chip8();
 let roms = new Rom();
 
-display.draw(new Array(2048).fill(0));
+display.render(new Array(2048).fill(0));
 
 let fileInput = document.getElementById('files') as HTMLInputElement;
 let start = document.getElementById('start') as HTMLButtonElement;
@@ -36,7 +36,7 @@ fileInput.addEventListener('change', (e: Event) => {
 function run() {
   chip8.execute();
   if (chip8.getDrawFlag() === true) {
-    display.draw(chip8.getDisplay());
+    display.render(chip8.getDisplay());
     chip8.setDrawFlag(false);
   }
 
