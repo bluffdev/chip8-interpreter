@@ -13,7 +13,7 @@ let start = document.getElementById('start') as HTMLButtonElement;
 
 function check() {
   if (roms.getRomsLength() !== 0) {
-    // chip8.loadRom(roms.getIBMRom());
+    chip8.loadRom(roms.getIBMRom());
     chip8.setLoaded(true);
     return;
   }
