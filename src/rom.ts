@@ -26,7 +26,7 @@ export default class Rom {
       }
     };
 
-    request.open('GET', 'src/roms/' + 'IBM.ch8');
+    request.open('GET', 'IBM.ch8');
     request.responseType = 'arraybuffer';
 
     request.send();

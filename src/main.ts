@@ -21,8 +21,8 @@ function check() {
   check();
 }
 
-// roms.readExistingRom();
-// chip8.setLoaded(true);
+roms.readExistingRom();
+chip8.setLoaded(true);
 
 fileInput.addEventListener('change', (e: Event) => {
   let file = (<any>e.target).files[0];
