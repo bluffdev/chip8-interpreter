@@ -7,15 +7,6 @@ export default class Rom {
     this.romNames = new Array();
   }
 
-  readRomInput(rom: any) {
-    let reader = new FileReader() as FileReader;
-    reader.onload = () => {
-      this.roms.push(new Uint8Array(reader.result as ArrayBuffer));
-      this.romNames.push('');
-    };
-    reader.readAsArrayBuffer(rom);
-  }
-
   readExistingRom() {
     let request = new XMLHttpRequest();
 
