@@ -1,4 +1,4 @@
-import { fontSprites } from './font';
+import { fontSprites, keyMappings } from './utils';
 
 export default class Chip8 {
   private memory: Uint8Array;
@@ -13,6 +13,7 @@ export default class Chip8 {
   private keys: Array<number>;
   private drawFlag: boolean;
   private loaded: boolean;
+  private readonly keyMappings: Map<string, number>;
 
   constructor() {
     this.memory = new Uint8Array(4096).fill(0);
@@ -28,6 +29,7 @@ export default class Chip8 {
     this.drawFlag = false;
     this.loaded = false;
     this.readSprites();
+    this.keyMappings = keyMappings;
   }
 
   readSprites() {
@@ -42,12 +44,18 @@ export default class Chip8 {
     }
   }
 
-  setKeyPressed(k: number) {
-    this.keys[k] = 1;
+  setKeyPressed(k: string) {
+    let key = this.keyMappings.get(k);
+    if (key !== undefined) {
+      this.keys[key] = 1;
+    }
   }
 
-  setKeyReleased(k: number) {
-    this.keys[k] = 0;
+  setKeyReleased(k: string) {
+    let key = this.keyMappings.get(k);
+    if (key !== undefined) {
+      this.keys[key] = 0;
+    }
   }
 
   keyPressed() {
