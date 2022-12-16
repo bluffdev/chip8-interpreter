@@ -4,12 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>Chip8</title>
   </head>
   <body>
     <div id="app">
       <div id="load">
+        <select id="dropdown">
+          <option value="Select Rom">Select Rom</option>
+          <option value="IBM Logo">IBM Logo</option>
+          <option value="Pong">Pong</option>
+          <option value="Tetris">Tetris</option>
+        </select>
         <button id="start">Start</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
       </div>
       <canvas width="1280" height="640"></canvas>
     </div>
@@ -17,7 +25,7 @@
   </body>
   <style>
     body {
-      background-color: grey;
+      background-color: rgb(41, 41, 41);
     }
     #app {
       display: flex;
@@ -29,6 +37,38 @@
     #load {
       display: flex;
       margin-bottom: 0.5em;
+      width: 800px;
+    }
+    #start,
+    #pause,
+    #reset {
+      width: 70%;
+      font-family: Arial, sans-serif;
+      font-size: 1.5rem;
+      background-color: transparent;
+      padding: 0.5em 0;
+      border: 2px solid #ccc;
+      color: #ccc;
+    }
+    #dropdown {
+      width: 100%;
+      padding: 0em 0.25em;
+      font-family: Arial, sans-serif;
+      font-size: 1.5rem;
+      background-color: transparent;
+      color: #ccc;
+      border: 2px solid #ccc;
+      outline: none;
+    }
+    option {
+      background-color: rgb(53, 53, 53);
+      border: 1px solid #ccc;
+    }
+    option:hover {
+      background-color: #f0f0f0;
+    }
+    canvas {
+      border: 2px solid #ccc;
     }
   </style>
 </html>
