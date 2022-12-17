@@ -1,18 +1,24 @@
 {
   "name": "chip8-interpreter",
-  "private": true,
   "version": "0.0.0",
+  "description": "CHIP-8 Interpreter written in TypeScript for the Web",
+  "author": "Brandon Rubio",
+  "license": "MIT",
+  "keywords": [
+    "chip8",
+    "chip8-interpreter",
+    "chip8-emulator",
+    "typescript",
+    "javascript"
+  ],
+  "private": true,
   "type": "module",
-  "homepage": "https://saxolandon.github.io/chip8-interpreter",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "gh-pages": "^4.0.0",
     "typescript": "^4.6.4",
     "vite": "^3.2.3"
   }
