@@ -12,7 +12,9 @@ export default class Chip8 {
   private stack: Uint16Array;
   private keys: Array<number>;
   private drawFlag: boolean;
-  private loaded: boolean;
+  private loadedFlag: boolean;
+  private pauseFlag: boolean;
+  private resetFlag: boolean;
   private readonly keyMappings: Map<string, number>;
 
   constructor() {
@@ -27,12 +29,32 @@ export default class Chip8 {
     this.stack = new Uint16Array(16).fill(0);
     this.keys = new Array(16).fill(0);
     this.drawFlag = false;
-    this.loaded = false;
-    this.readSprites();
+    this.loadedFlag = false;
+    this.pauseFlag = false;
+    this.resetFlag = false;
+    this.loadSprites();
     this.keyMappings = keyMappings;
   }
 
-  readSprites() {
+  reset() {
+    this.memory.fill(0);
+    this.display.fill(0);
+    this.V.fill(0);
+    this.I = 0;
+    this.DT = 0;
+    this.ST = 0;
+    this.PC = 0x200;
+    this.SP = 0;
+    this.stack.fill(0);
+    this.keys.fill(0);
+    this.drawFlag = false;
+    this.loadedFlag = false;
+    this.pauseFlag = false;
+    this.resetFlag = false;
+    this.loadSprites();
+  }
+
+  loadSprites() {
     for (let i = 0; i < 80; i++) {
       this.memory[i] = fontSprites[i];
     }
@@ -42,6 +64,7 @@ export default class Chip8 {
     for (let i = 0; i < rom.length; i++) {
       this.memory[0x200 + i] = rom[i];
     }
+    this.loadedFlag = true;
   }
 
   setKeyPressed(k: string) {
@@ -64,7 +87,6 @@ export default class Chip8 {
         return true;
       }
     }
-
     return false;
   }
 
@@ -76,7 +98,7 @@ export default class Chip8 {
   }
 
   execute() {
-    if (this.loaded === false) return;
+    if (!this.loadedFlag || this.resetFlag || this.pauseFlag) return;
 
     if (this.DT > 0) {
       this.DT -= 1;
@@ -95,42 +117,30 @@ export default class Chip8 {
           this.drawFlag = true;
           this.display = new Array<number>(2048).fill(0);
           this.PC += 2;
-          console.log('00E0: CLS');
         } else if (opcode === 0x00ee) {
           if (this.SP === 0) {
-            console.log('Stack underflow');
+            console.error('Stack underflow');
             return;
           }
           this.SP -= 1;
           this.PC = this.stack[this.SP];
           this.PC += 2;
-          console.log('00EE: RET');
         }
         break;
       case 0x1000:
         this.PC = nnn;
-        console.log('1nnn: JP nnn ', nnn.toString(16), this.PC.toString(16));
         break;
       case 0x2000:
         this.stack[this.SP] = this.PC;
         this.SP += 1;
         this.PC = nnn;
-        console.log('3nnn: Call nnn', this.PC.toString(16), nnn.toString(16));
         break;
       case 0x3000:
         if (this.V[x] === kk) {
           this.PC += 4;
-          console.log('skip');
         } else {
-          console.log('no skip');
           this.PC += 2;
         }
-        console.log(
-          '3xkk: SE Vx, kk ',
-          this.V[x].toString(16),
-          kk.toString(16),
-          opcode.toString(16)
-        );
         break;
       case 0x4000:
         if (this.V[x] !== kk) {
@@ -138,7 +148,6 @@ export default class Chip8 {
         } else {
           this.PC += 2;
         }
-        console.log('4xkk: SNE Vx, kk');
         break;
       case 0x5000:
         if (this.V[x] === this.V[y]) {
@@ -146,39 +155,32 @@ export default class Chip8 {
         } else {
           this.PC += 2;
         }
-        console.log('5xy0: Se Vx, Vy');
         break;
       case 0x6000:
         this.V[x] = kk;
         this.PC += 2;
-        console.log('6xkk: LD Vx, kk ', kk.toString(16));
         break;
       case 0x7000:
         this.V[x] += kk;
         this.PC += 2;
-        console.log('7xkk: ADD Vx, kk', kk.toString(16));
         break;
       case 0x8000:
         switch (n) {
           case 0x0:
             this.V[x] = this.V[y];
             this.PC += 2;
-            console.log('8xy0: LD Vx, Vy');
             break;
           case 0x1:
             this.V[x] |= this.V[y];
             this.PC += 2;
-            console.log('8xy1: OR Vx, Vy');
             break;
           case 0x2:
             this.V[x] &= this.V[y];
             this.PC += 2;
-            console.log('8x02: AND Vx, Vy');
             break;
           case 0x3:
             this.V[x] ^= this.V[y];
             this.PC += 2;
-            console.log('8xy3: XOR Vx, Vy');
             break;
           case 0x4:
             this.V[x] += this.V[y];
@@ -188,7 +190,6 @@ export default class Chip8 {
               this.V[15] = 0;
             }
             this.PC += 2;
-            console.log('8xy4: ADD Vx, Vy');
             break;
           case 0x5:
             if (this.V[x] > this.V[y]) {
@@ -198,7 +199,6 @@ export default class Chip8 {
             }
             this.V[x] -= this.V[y];
             this.PC += 2;
-            console.log('8xy5: SUB Vx, Vy');
             break;
           case 0x6:
             if ((this.V[x] & 0x1) === 1) {
@@ -206,7 +206,6 @@ export default class Chip8 {
             }
             this.V[x] >>= 1;
             this.PC += 2;
-            console.log('8xy6: SHR Vx {, Vy}');
             break;
           case 0x7:
             if (this.V[y] > this.V[x]) {
@@ -216,7 +215,6 @@ export default class Chip8 {
             }
             this.V[x] = this.V[y] - this.V[x];
             this.PC += 2;
-            console.log('8xy7: SUBN Vx, Vy');
             break;
           case 0xe:
             if (this.V[x] >> 7 === 1) {
@@ -226,10 +224,9 @@ export default class Chip8 {
             }
             this.V[x] <<= 1;
             this.PC += 2;
-            console.log('8xyE: SHL Vx {, Vy}');
             break;
           default:
-            console.log('INVALID OPCODE REEEEEEEEEEEEEEE (its fine)');
+            console.error('INVALID OPCODE');
             break;
         }
         break;
@@ -239,22 +236,18 @@ export default class Chip8 {
         } else {
           this.PC += 2;
         }
-        console.log('9xy0: SNE Vx, Vy');
         break;
       case 0xa000:
         this.I = nnn;
         this.PC += 2;
-        console.log('Annn: LD I, nnn ', nnn.toString(16), this.I.toString(16));
         break;
       case 0xb000:
         this.PC = nnn + this.V[0];
-        console.log('Bnnn: JP V0, nnn');
         break;
       case 0xc000:
         let rand = Math.random() * 255;
         this.V[x] = rand & kk;
         this.PC += 2;
-        console.log('Cxkk: RND Vx, kk');
         break;
       case 0xd000:
         this.V[0xf] = 0;
@@ -279,25 +272,20 @@ export default class Chip8 {
         }
         this.drawFlag = true;
         this.PC += 2;
-        console.log('Dxyn: DRW Vx, Vy, nibble ', n.toString(16));
         break;
       case 0xe000:
         if (kk === 0x9e) {
-          // TODO
           if (this.keys[this.V[x]] === 1) {
             this.PC += 4;
           } else {
             this.PC += 2;
           }
-          console.log('Ex9E: SKP Vx');
         } else if (kk === 0xa1) {
-          // TODO
           if (this.keys[this.V[x]] === 0) {
             this.PC += 4;
           } else {
             this.PC += 2;
           }
-          console.log('ExA1: SKNP Vx');
         }
         break;
       case 0xf000:
@@ -305,41 +293,34 @@ export default class Chip8 {
           case 0x07:
             this.V[x] = this.DT;
             this.PC += 2;
-            console.log('Fx07: LD Vx, DT');
             break;
           case 0x0a:
             if (this.keyPressed() === false) {
               return;
             }
             this.PC += 2;
-            console.log('Fx0A: LD Vx, K');
             break;
           case 0x15:
             this.DT = this.V[x];
             this.PC += 2;
-            console.log('Fx15: LD DT, Vx');
             break;
           case 0x18:
             this.ST = this.V[x];
             this.PC += 2;
-            console.log('Fx18: LD St, Vx');
             break;
           case 0x1e:
             this.I += this.V[x];
             this.PC += 2;
-            console.log('Fx1E: ADD I, Vx');
             break;
           case 0x29:
             this.I = this.V[x] * 0x5;
             this.PC += 2;
-            console.log('Fx29: LD F, Vx');
             break;
           case 0x33:
             this.memory[this.I] = Math.floor(this.V[x] / 100) % 10;
             this.memory[this.I + 1] = Math.floor(this.V[x] / 10) % 10;
             this.memory[this.I + 2] = this.V[x] % 10;
             this.PC += 2;
-            console.log('Fx33: LD B, Vx');
             break;
           case 0x55:
             for (let i = 0; i <= x; i++) {
@@ -347,7 +328,6 @@ export default class Chip8 {
               this.I = (this.I + 1) & 0xffff;
             }
             this.PC += 2;
-            console.log('Fx55: LD [I], Vx');
             break;
           case 0x65:
             for (let i = 0; i <= x; i++) {
@@ -355,15 +335,14 @@ export default class Chip8 {
               this.I = (this.I + 1) & 0xffff;
             }
             this.PC += 2;
-            console.log('Fx65: LD Vx, [I]');
             break;
           default:
-            console.log('INVALID OPCODE', opcode.toString(16));
+            console.error('INVALID OPCODE');
             break;
         }
         break;
       default:
-        console.log('INVALID OPCODE', opcode.toString(16));
+        console.error('INVALID OPCODE');
     }
   }
 
@@ -379,11 +358,31 @@ export default class Chip8 {
     this.drawFlag = val;
   }
 
-  getLoaded() {
-    return this.loaded;
+  getLoadedFlag() {
+    return this.loadedFlag;
   }
 
-  setLoaded(val: boolean) {
-    this.loaded = val;
+  setLoadedFlag(val: boolean) {
+    this.loadedFlag = val;
+  }
+
+  getPauseFlag() {
+    return this.pauseFlag;
+  }
+
+  setPauseFlag(val: boolean) {
+    this.pauseFlag = val;
+  }
+
+  getResetFlag() {
+    return this.resetFlag;
+  }
+
+  setResetFlag(val: boolean) {
+    this.resetFlag = val;
+  }
+
+  getSoundTimer() {
+    return this.ST;
   }
 }

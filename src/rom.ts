@@ -1,33 +1,18 @@
 export default class Rom {
-  private roms: Array<Uint8Array>;
-  private romNames: Array<string>;
+  private contents: Uint8Array;
 
   constructor() {
-    this.roms = new Array();
-    this.romNames = new Array();
+    this.contents = new Uint8Array();
   }
 
-  readExistingRom() {
-    let request = new XMLHttpRequest();
-
-    request.onload = () => {
-      if (request.response) {
-        this.roms.push(new Uint8Array(request.response));
-        this.romNames.push('');
-      }
-    };
-
-    request.open('GET', 'IBM.ch8');
-    request.responseType = 'arraybuffer';
-
-    request.send();
+  async readExistingRom(name: string) {
+    return await fetch(name, { method: 'GET' })
+      .then((response) => response.arrayBuffer())
+      .then((data) => (this.contents = new Uint8Array(data)))
+      .catch((err) => console.error(err));
   }
 
-  getIBMRom() {
-    return this.roms[0];
-  }
-
-  getRomsLength() {
-    return this.roms.length;
+  getContents() {
+    return this.contents;
   }
 }

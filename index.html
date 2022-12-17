@@ -4,16 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chip8</title>
+    <title>CHIP-8</title>
   </head>
   <body>
     <div id="app">
       <div id="load">
         <select id="dropdown">
-          <option value="Select Rom">Select Rom</option>
-          <option value="IBM Logo">IBM Logo</option>
-          <option value="Pong">Pong</option>
-          <option value="Tetris">Tetris</option>
+          <option value="NONE">Select Rom</option>
+          <option value="IBM.ch8">IBM Logo</option>
+          <option value="MAZE.ch8">Maze</option>
+          <option value="PONG.ch8">Pong</option>
+          <option value="TETRIS.ch8">Tetris</option>
+          <option value="SPACE_INVADERS.ch8">Space Invaders</option>
         </select>
         <button id="start">Start</button>
         <button id="pause">Pause</button>
@@ -32,7 +34,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin-top: 10em;
+      margin-top: 11.25em;
     }
     #load {
       display: flex;
@@ -48,6 +50,7 @@
       background-color: transparent;
       padding: 0.5em 0;
       border: 2px solid #ccc;
+      border-left: none;
       color: #ccc;
     }
     #dropdown {
