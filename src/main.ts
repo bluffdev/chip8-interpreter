@@ -18,6 +18,8 @@ import Rom from './rom';
     chip8.setKeyReleased(e.key);
   });
 
+  let timeout: NodeJS.Timeout;
+
   function run() {
     chip8.execute();
     if (chip8.getDrawFlag() === true) {
@@ -26,15 +28,17 @@ import Rom from './rom';
     }
 
     if (chip8.getPauseFlag() === true) {
+      clearTimeout(timeout);
       return;
     }
 
     if (chip8.getResetFlag() === true) {
       chip8.setResetFlag(false);
+      clearTimeout(timeout);
       return;
     }
 
-    setTimeout(() => {
+    timeout = setTimeout(() => {
       run();
     }, 1);
   }
@@ -64,6 +68,7 @@ import Rom from './rom';
     e.preventDefault();
     if (chip8.getLoadedFlag() === false && dropdown.value !== 'NONE') {
       selectRom(dropdown.value);
+      chip8.setResetFlag(false);
       run();
     }
   });

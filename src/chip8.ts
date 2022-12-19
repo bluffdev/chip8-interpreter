@@ -50,7 +50,7 @@ export default class Chip8 {
     this.drawFlag = false;
     this.loadedFlag = false;
     this.pauseFlag = false;
-    this.resetFlag = false;
+    this.resetFlag = true;
     this.loadSprites();
   }
 
