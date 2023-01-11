@@ -15,7 +15,7 @@ You will need to have [Node.js](https://nodejs.org/en/) installed on your system
 Clone this repository and install the dependencies.
 
 ```bash
-git clone https://github.com/saxolandon/chip8-interpreter.git
+git clone https://github.com/trafguy/chip8-interpreter.git
 cd chip8-interpreter
 npm i
 ```
